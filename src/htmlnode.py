@@ -12,7 +12,9 @@ class HTMLNode():
         raise NotImplementedError
 
     def props_to_html(self):
+        if self.props is None:
+            return ""
         lines = []
         for prop in self.props.keys():
             lines.append(f'{prop}="{self.props[prop]}"')
-        return " ".join(lines) or ""
+        return f' {" ".join(lines)}'
