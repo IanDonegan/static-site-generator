@@ -2,8 +2,8 @@ from htmlnode import HTMLNode
 
 class LeafNode(HTMLNode):
     def __init__(self, tag, value, props=None):
-        if value is None or tag is None:
-            raise Exception("value and tag at minimum must be specified")
+        if value is None:
+            raise ValueError("All leaf nodes must have a value")
         super().__init__(tag,value,None,props)
 
     def __repr__(self):
