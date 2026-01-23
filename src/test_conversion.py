@@ -133,6 +133,161 @@ class TestTextNode(unittest.TestCase):
             new_nodes,
         )
 
+    def test_text_to_textnodes(self):
+        new_nodes = text_to_textnodes("This is **text** with an _italic_ word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)")
+        self.assertListEqual(
+            [
+                TextNode("This is ", TextType.TEXT),
+                TextNode("text", TextType.BOLD),
+                TextNode(" with an ", TextType.TEXT),
+                TextNode("italic", TextType.ITALIC),
+                TextNode(" word and a ", TextType.TEXT),
+                TextNode("code block", TextType.CODE),
+                TextNode(" and an ", TextType.TEXT),
+                TextNode("obi wan image", TextType.IMAGE, "https://i.imgur.com/fJRm4Vk.jpeg"),
+                TextNode(" and a ", TextType.TEXT),
+                TextNode("link", TextType.LINK, "https://boot.dev"),
+            ],
+            new_nodes
+        )
+
+    def test_markdown_to_blocks(self):
+        md = """
+This is **bolded** paragraph
+
+This is another paragraph with _italic_ text and `code` here
+This is the same paragraph on a new line
+
+- This is a list
+- with items
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "This is **bolded** paragraph",
+                "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+                "- This is a list\n- with items",
+            ],
+        )
+
+    def test_markdown_to_blocks_extra_empty_lines(self):
+        md = """
+This is **bolded** paragraph
+
+
+This is another paragraph with _italic_ text and `code` here
+This is the same paragraph on a new line
+
+
+
+- This is a list
+- with items
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "This is **bolded** paragraph",
+                "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+                "- This is a list\n- with items",
+            ],
+        )
+
+    def test_markdown_to_blocks_blank(self):
+        md = ""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual( blocks, [],)
+
+    def test_block_to_block_type_paragraph(self):
+        md = """
+This is a paragraph.
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(BlockType.PARAGRAPH, block_to_block_type(blocks[0]))
+
+    def test_block_to_block_type_heading(self):
+        md = """
+## This is a heading.
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(BlockType.HEADING, block_to_block_type(blocks[0]))
+
+    def test_block_to_block_type_code(self):
+        md = """
+```
+This is code.
+```
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(BlockType.CODE, block_to_block_type(blocks[0]))
+
+    def test_block_to_block_type_code_unclosed(self):
+        md = """
+```
+This is code.
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(BlockType.PARAGRAPH, block_to_block_type(blocks[0]))
+
+    def test_block_to_block_type_quote(self):
+        md = """
+> This is a quote.
+> This is another quote.
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(BlockType.QUOTE, block_to_block_type(blocks[0]))
+
+    def test_block_to_block_type_quote_incomplete(self):
+        md = """
+> This is a quote.
+This is non-quote
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(BlockType.PARAGRAPH, block_to_block_type(blocks[0]))
+
+    def test_block_to_block_type_ordered(self):
+        md = """
+1. This is line one.
+2. This is line two.
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(BlockType.ORDERED_LIST, block_to_block_type(blocks[0]))
+
+    def test_block_to_block_type_ordered_incomplete(self):
+        md = """
+1. This is line one.
+This is line two.
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(BlockType.PARAGRAPH, block_to_block_type(blocks[0]))
+
+    def test_block_to_block_type_unordered(self):
+        md = """
+- This is line one.
+- This is line two.
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(BlockType.UNORDERED_LIST, block_to_block_type(blocks[0]))
+
+    def test_block_to_block_type_unordered_incomplete(self):
+        md = """
+- This is line one.
+This is line two.
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(BlockType.PARAGRAPH, block_to_block_type(blocks[0]))
+
+    def test_block_to_block_type_empty(self):
+        md = ""
+        blocks = markdown_to_blocks(md)
+        with self.assertRaises(IndexError):
+            block_to_block_type(blocks[0])
+
+    def test_block_to_block_type_none(self):
+        md = None
+        with self.assertRaises(AttributeError):
+            blocks = markdown_to_blocks(md)
 
 if __name__ == "__main__":
     unittest.main()
